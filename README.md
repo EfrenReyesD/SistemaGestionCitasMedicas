@@ -3,7 +3,7 @@
 ## Descripción
 API REST desarrollada en .NET 8 con C# para gestionar citas médicas, aplicando los principios de Programación Orientada a Objetos (POO).
 
-Proyecto desarrollado para la materia de Programación Orientada a Objetos (POO) - Universidad IUV Maestría
+Proyecto desarrollado para la tarea sobre Programación Orientada a Objetos (POO) - Universidad IUV Maestría
 
 ---
 
