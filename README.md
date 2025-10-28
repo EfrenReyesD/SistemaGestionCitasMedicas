@@ -39,33 +39,33 @@ Luego abrir: `https://localhost:7xxx/swagger`
 ### Estructura de Carpetas
 ```
 WebApplication1/
-??? Controllers/
-?   ??? UsuariosController.cs
-?   ??? PacientesController.cs
-?   ??? DoctoresController.cs
-?   ??? CitasController.cs
-?   ??? ReportesController.cs
-?
-??? Models/
-?   ??? Usuario.cs (clase base)
-?   ??? UsuarioManager.cs
-?   ??? Paciente.cs
-?   ??? Doctor.cs
-?   ??? Asistente.cs
-?   ??? Cita.cs
-?   ??? NotaMedica.cs
-?   ??? RecordatorioService.cs
-?   ??? Reporte.cs
-?   ??? DatosMock.cs (GUIDs fijos para pruebas)
-?
-??? docs/
-?   ??? DiagramaClases_SistemaGestionCitasMedicas.png
-?
-??? Program.cs
-??? appsettings.json
-??? WebApplication1.csproj
-??? README.md
-??? GUIDS_SWAGGER.md
+|-- Controllers/
+|   |-- UsuariosController.cs
+|   |-- PacientesController.cs
+|   |-- DoctoresController.cs
+|   |-- CitasController.cs
+|   `-- ReportesController.cs
+|
+|-- Models/
+|   |-- Usuario.cs (clase base)
+|   |-- UsuarioManager.cs
+|   |-- Paciente.cs
+|   |-- Doctor.cs
+|   |-- Asistente.cs
+|   |-- Cita.cs
+|   |-- NotaMedica.cs
+|   |-- RecordatorioService.cs
+|   |-- Reporte.cs
+|   `-- DatosMock.cs (GUIDs fijos para pruebas)
+|
+|-- docs/
+|   `-- DiagramaClases_SistemaGestionCitasMedicas.png
+|
+|-- Program.cs
+|-- appsettings.json
+|-- WebApplication1.csproj
+|-- README.md
+`-- GUIDS_SWAGGER.md
 ```
 
 ### Diagrama de Clases
@@ -101,9 +101,9 @@ WebApplication1/
 ## Inicio Rápido
 
 ### 1. Ver datos precargados
-- `GET /api/pacientes` ? 2 pacientes
-- `GET /api/doctores` ? 2 doctores  
-- `GET /api/citas` ? 3 citas programadas
+- `GET /api/pacientes` - 2 pacientes
+- `GET /api/doctores` - 2 doctores  
+- `GET /api/citas` - 3 citas programadas
 
 ### 2. Probar con GUIDs fijos
 Ver archivo **`GUIDS_SWAGGER.md`** para copiar/pegar IDs de prueba.
@@ -189,9 +189,9 @@ PUT /api/citas/55555555-5555-5555-5555-555555555555/reprogramar
 
 ## Guía de Uso en Swagger
 
-1. **GET sin parámetros**: Clic en endpoint ? "Try it out" ? "Execute"
-2. **GET con ID**: "Try it out" ? Pegar GUID ? "Execute"
-3. **POST/PUT**: "Try it out" ? Pegar JSON ? "Execute"
+1. **GET sin parámetros**: Clic en endpoint - "Try it out" - "Execute"
+2. **GET con ID**: "Try it out" - Pegar GUID - "Execute"
+3. **POST/PUT**: "Try it out" - Pegar JSON - "Execute"
 
 ---
 
@@ -216,10 +216,10 @@ PUT /api/citas/55555555-5555-5555-5555-555555555555/reprogramar
 ## Solución de Problemas
 
 **Error: SDK no encontrado**  
-? Instalar .NET 8 SDK desde https://dotnet.microsoft.com/download
+- Instalar .NET 8 SDK desde https://dotnet.microsoft.com/download
 
 **Swagger no abre automáticamente**  
-? Abrir manualmente: `https://localhost:7xxx/swagger`
+- Abrir manualmente: `https://localhost:7xxx/swagger`
 
 ---
 
