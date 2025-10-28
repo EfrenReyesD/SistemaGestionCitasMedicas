@@ -1,30 +1,30 @@
-# Sistema de Gestión de Citas Médicas
+# Sistema de GestiÃ³n de Citas MÃ©dicas
 
-## Descripción
-API REST desarrollada en .NET 8 con C# para gestionar citas médicas, aplicando los principios de Programación Orientada a Objetos (POO).
+## DescripciÃ³n
+API REST desarrollada en .NET 8 con C# para gestionar citas mÃ©dicas, aplicando los principios de ProgramaciÃ³n Orientada a Objetos (POO).
 
-Proyecto desarrollado para la materia de Programación Orientada a Objetos (POO) - Universidad IUV Maestría
+Proyecto desarrollado para la materia de ProgramaciÃ³n Orientada a Objetos (POO) - Universidad IUV MaestrÃ­a
 
 ---
 
 ## Requisitos Previos
 
-- **.NET 8 SDK** - [Descargar aquí](https://dotnet.microsoft.com/download/dotnet/8.0)
+- **.NET 8 SDK** - [Descargar aquÃ­](https://dotnet.microsoft.com/download/dotnet/8.0)
 - **Visual Studio 2022** o **VS Code**
 - Navegador web moderno
 
 ---
 
-## Instalación y Ejecución
+## InstalaciÃ³n y EjecuciÃ³n
 
-### Opción 1: Desde Visual Studio
+### OpciÃ³n 1: Desde Visual Studio
 1. Abrir el archivo `WebApplication1.sln`
 2. Presionar **F5**
-3. Swagger se abrirá automáticamente
+3. Swagger se abrirÃ¡ automÃ¡ticamente
 
-### Opción 2: Desde línea de comandos
+### OpciÃ³n 2: Desde lÃ­nea de comandos
 ```bash
-git clone https://github.com/tu-usuario/sistema-gestion-citas-medicas.git
+git clone https://github.com/EfrenReyesD/SistemaGestionCitasMedicas.git
 cd sistema-gestion-citas-medicas
 dotnet restore
 dotnet run
@@ -70,7 +70,8 @@ WebApplication1/
 
 ### Diagrama de Clases
 
-![Diagrama de Clases](docs/DiagramaClases_SistemaGestionCitasMedicas.png)
+<img width="880" height="758" alt="DiagramaClases_SistemaGestionCitasMedicas" src="https://github.com/user-attachments/assets/c97b2ef9-cb5f-4bcc-b1be-567158d94bd2" />
+
 
 ---
 
@@ -82,23 +83,23 @@ WebApplication1/
 
 ### 2. Encapsulamiento
 - Propiedades con getters y setters
-- Métodos privados como `HashPassword()` en Usuario
+- MÃ©todos privados como `HashPassword()` en Usuario
 - Lista privada `_historial` en Paciente
 
 ### 3. Polimorfismo
-- Métodos heredados pueden ser usados por cualquier tipo de Usuario
+- MÃ©todos heredados pueden ser usados por cualquier tipo de Usuario
 
-### 4. Composición
+### 4. ComposiciÃ³n
 - `Cita` contiene instancias de `Paciente` y `Doctor`
 - `Cita` puede tener una `NotaMedica`
 
-### 5. Asociación
-- `Doctor` se relaciona con múltiples `Cita` a través de la agenda
+### 5. AsociaciÃ³n
+- `Doctor` se relaciona con mÃºltiples `Cita` a travÃ©s de la agenda
 - `Paciente` tiene historial de `NotaMedica`
 
 ---
 
-## Inicio Rápido
+## Inicio RÃ¡pido
 
 ### 1. Ver datos precargados
 - `GET /api/pacientes` - 2 pacientes
@@ -109,14 +110,14 @@ WebApplication1/
 Ver archivo **`GUIDS_SWAGGER.md`** para copiar/pegar IDs de prueba.
 
 **Ejemplo:**
-- Paciente María: `11111111-1111-1111-1111-111111111111`
-- Doctor Juan Pérez: `33333333-3333-3333-3333-333333333333`
+- Paciente MarÃ­a: `11111111-1111-1111-1111-111111111111`
+- Doctor Juan PÃ©rez: `33333333-3333-3333-3333-333333333333`
 
 ---
 
 ## Endpoints Disponibles
 
-Todos los endpoints incluyen documentación detallada visible en **Swagger UI**.
+Todos los endpoints incluyen documentaciÃ³n detallada visible en **Swagger UI**.
 
 ### Usuarios (`/api/usuarios`)
 - **GET** `/api/usuarios` - Obtiene todos los usuarios del sistema
@@ -128,7 +129,7 @@ Todos los endpoints incluyen documentación detallada visible en **Swagger UI**.
 - **GET** `/api/pacientes` - Obtiene todos los pacientes
 - **GET** `/api/pacientes/{id}` - Obtiene un paciente por ID
 - **POST** `/api/pacientes` - Registra un nuevo paciente
-- **GET** `/api/pacientes/{id}/historial` - Obtiene el historial médico del paciente
+- **GET** `/api/pacientes/{id}/historial` - Obtiene el historial mÃ©dico del paciente
 
 ### Doctores (`/api/doctores`)
 - **GET** `/api/doctores` - Obtiene todos los doctores
@@ -142,7 +143,7 @@ Todos los endpoints incluyen documentación detallada visible en **Swagger UI**.
 - **POST** `/api/citas` - Programa una nueva cita
 - **PUT** `/api/citas/{id}/reprogramar` - Reprograma una cita existente
 - **PUT** `/api/citas/{id}/cancelar` - Cancela una cita
-- **POST** `/api/citas/{id}/nota` - Agrega una nota médica a la cita
+- **POST** `/api/citas/{id}/nota` - Agrega una nota mÃ©dica a la cita
 
 ### Reportes (`/api/reportes`)
 - **GET** `/api/reportes/consultas?fechaInicio={fecha}&fechaFin={fecha}` - Genera reporte de consultas
@@ -156,7 +157,7 @@ Todos los endpoints incluyen documentación detallada visible en **Swagger UI**.
 ```json
 POST /api/pacientes
 {
-  "nombre": "Pedro Sánchez",
+  "nombre": "Pedro SÃ¡nchez",
   "email": "pedro.sanchez@email.com",
   "fechaNacimiento": "1985-03-20",
   "telefono": "+34 600 987 654"
@@ -187,46 +188,46 @@ PUT /api/citas/55555555-5555-5555-5555-555555555555/reprogramar
 
 ---
 
-## Guía de Uso en Swagger
+## GuÃ­a de Uso en Swagger
 
-1. **GET sin parámetros**: Clic en endpoint - "Try it out" - "Execute"
+1. **GET sin parÃ¡metros**: Clic en endpoint - "Try it out" - "Execute"
 2. **GET con ID**: "Try it out" - Pegar GUID - "Execute"
 3. **POST/PUT**: "Try it out" - Pegar JSON - "Execute"
 
 ---
 
-## Tecnologías Utilizadas
+## TecnologÃ­as Utilizadas
 
 - **.NET 8** - Framework principal
 - **ASP.NET Core Web API** - Arquitectura REST
-- **Swagger/OpenAPI** - Documentación interactiva
-- **C# 12** - Lenguaje de programación
-- **GUID** - Identificadores únicos
+- **Swagger/OpenAPI** - DocumentaciÃ³n interactiva
+- **C# 12** - Lenguaje de programaciÃ³n
+- **GUID** - Identificadores Ãºnicos
 
 ---
 
 ## Notas Importantes
 
 - **Almacenamiento**: Datos en memoria (se pierden al reiniciar)
-- **Datos de prueba**: Precargados automáticamente
+- **Datos de prueba**: Precargados automÃ¡ticamente
 - **GUIDs fijos**: Ver `GUIDS_SWAGGER.md`
 
 ---
 
-## Solución de Problemas
+## SoluciÃ³n de Problemas
 
 **Error: SDK no encontrado**  
 - Instalar .NET 8 SDK desde https://dotnet.microsoft.com/download
 
-**Swagger no abre automáticamente**  
+**Swagger no abre automÃ¡ticamente**  
 - Abrir manualmente: `https://localhost:7xxx/swagger`
 
 ---
 
-## Información del Proyecto
+## InformaciÃ³n del Proyecto
 
 - **Nombre**: SistemaGestionCitasMedicas
-- **Versión**: 1.0.0
-- **Autor**: Universidad IUV Maestría
+- **VersiÃ³n**: 1.0.0
+- **Autor**: Universidad IUV MaestrÃ­a
 - **Framework**: .NET 8.0
-- **Materia**: Programación Orientada a Objetos
+- **Materia**: ProgramaciÃ³n Orientada a Objetos
