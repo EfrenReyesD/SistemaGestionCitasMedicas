@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SistemaGestionCitasMedicas.Models;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace SistemaGestionCitasMedicas.Controllers
 {
@@ -8,6 +9,15 @@ namespace SistemaGestionCitasMedicas.Controllers
     [Produces("application/json")]
     public class CitasController : ControllerBase
     {
+        private readonly ILogger<CitasController> _logger;
+        private readonly IMemoryCache _cache;
+
+        public CitasController(ILogger<CitasController> logger, IMemoryCache cache)
+        {
+            _logger = logger;
+            _cache = cache;
+        }
+
         static CitasController()
         {
             var pacientes = PacientesController.ObtenerPacientes();
@@ -57,7 +67,20 @@ namespace SistemaGestionCitasMedicas.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<Cita>> GetCitas()
         {
-            return Ok(CitaManager.ObtenerTodas());
+            const string cacheKey = "todas_las_citas";
+            
+            if (!_cache.TryGetValue(cacheKey, out List<Cita>? citas))
+            {
+                citas = CitaManager.ObtenerTodas();
+                _cache.Set(cacheKey, citas, TimeSpan.FromMinutes(5));
+                _logger.LogInformation("Lista de citas cargada en caché");
+            }
+            else
+            {
+                _logger.LogInformation("Lista de citas obtenida desde caché");
+            }
+
+            return Ok(citas);
         }
 
         /// <summary>
@@ -70,7 +93,10 @@ namespace SistemaGestionCitasMedicas.Controllers
         {
             var cita = CitaManager.ObtenerPorId(id);
             if (cita == null)
+            {
+                _logger.LogWarning("Cita con ID {CitaId} no encontrada", id);
                 return NotFound();
+            }
 
             return Ok(cita);
         }
@@ -83,6 +109,9 @@ namespace SistemaGestionCitasMedicas.Controllers
         public ActionResult<Cita> PostCita(Cita cita)
         {
             CitaManager.AgregarCita(cita);
+            _cache.Remove("todas_las_citas");
+            _logger.LogInformation("Cita creada: {CitaId} para paciente {PacienteId} con doctor {DoctorId}", 
+                cita.IdCita, cita.Paciente?.IdPaciente, cita.Doctor?.IdUsuario);
             return CreatedAtAction(nameof(GetCita), new { id = cita.IdCita }, cita);
         }
 
@@ -100,8 +129,14 @@ namespace SistemaGestionCitasMedicas.Controllers
                 return NotFound();
 
             if (cita.Reprogramar(nuevaFecha))
+            {
+                _cache.Remove("todas_las_citas");
+                _logger.LogInformation("Cita {CitaId} reprogramada de {FechaAnterior} a {FechaNueva}", 
+                    id, cita.FechaHora, nuevaFecha);
                 return Ok(new { mensaje = "Cita reprogramada exitosamente", nuevaFecha });
+            }
 
+            _logger.LogWarning("No se pudo reprogramar la cita {CitaId}", id);
             return BadRequest(new { mensaje = "No se puede reprogramar esta cita" });
         }
 
@@ -119,7 +154,11 @@ namespace SistemaGestionCitasMedicas.Controllers
                 return NotFound();
 
             if (cita.Cancelar())
+            {
+                _cache.Remove("todas_las_citas");
+                _logger.LogWarning("Cita {CitaId} cancelada", id);
                 return Ok(new { mensaje = "Cita cancelada exitosamente" });
+            }
 
             return BadRequest(new { mensaje = "Esta cita ya está cancelada" });
         }
@@ -139,6 +178,8 @@ namespace SistemaGestionCitasMedicas.Controllers
             nota.IdNota = Guid.NewGuid();
             nota.Fecha = DateTime.Now;
             cita.AgregarNota(nota);
+
+            _logger.LogInformation("Nota médica agregada a cita {CitaId}", id);
 
             return Created(string.Empty, nota);
         }

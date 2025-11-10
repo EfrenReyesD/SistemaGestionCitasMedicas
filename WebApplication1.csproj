@@ -6,15 +6,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>SistemaGestionCitasMedicas</AssemblyName>
     <RootNamespace>SistemaGestionCitasMedicas</RootNamespace>
-    <Product>Sistema de Gestión de Citas Médicas</Product>
-    <Description>API REST para gestionar citas médicas aplicando principios de POO</Description>
-    <Authors>Universidad IUV Maestría</Authors>
+    <Product>Sistema de Gestiï¿½n de Citas Mï¿½dicas</Product>
+    <Description>API REST para gestionar citas mï¿½dicas aplicando principios de POO</Description>
+    <Authors>Universidad IUV Maestrï¿½a</Authors>
     <Version>1.0.0</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
