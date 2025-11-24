@@ -23,7 +23,7 @@ cd SistemaGestionCitasMedicas
 
 ### 2. Configurar Base de Datos
 
-Ejecutar el script SQL ubicado en la raíz del proyecto para crear la base de datos.
+Ejecutar el script SQL ubicado en la carpeta SQL del proyecto para crear la base de datos.
 
 **Configurar ConnectionString** en `appsettings.json`:
 ```json
@@ -94,7 +94,7 @@ SistemaGestionCitasMedicas/
 
 ## Endpoints API
 
-Ver documentación completa en **Swagger**: `https://localhost:7056/swagger`
+Ver documentación completa en **Swagger**: `https://localhost:5157/swagger`
 
 **Usuarios:** `GET/POST /api/usuarios`  
 **Pacientes:** `GET/POST /api/pacientes`, `GET /api/pacientes/{id}/historial`  
