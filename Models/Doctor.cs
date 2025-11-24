@@ -1,14 +1,13 @@
 namespace SistemaGestionCitasMedicas.Models
 {
-    public class Doctor : Usuario
+    public class Doctor
     {
+        public Guid IdDoctor { get; set; }
+        public Guid IdUsuario { get; set; }
         public string NumeroCedula { get; set; } = string.Empty;
         public string Especialidad { get; set; } = string.Empty;
-
-        public List<Cita> VerAgenda(DateTime fecha)
-        {
-            return CitaManager.ObtenerCitasPorDoctor(IdUsuario, fecha);
-        }
+        
+        public Usuario? Usuario { get; set; }
 
         public NotaMedica RegistrarNota(Cita cita, NotaMedica nota)
         {

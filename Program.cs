@@ -1,80 +1,63 @@
 using Microsoft.OpenApi.Models;
 using System.Reflection;
-using Serilog;
+using Microsoft.EntityFrameworkCore;
+using SistemaGestionCitasMedicas.Data;
+using SistemaGestionCitasMedicas.Services;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using SistemaGestionCitasMedicas.Validators;
 
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .WriteTo.File("logs/sistema-.txt", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
+var builder = WebApplication.CreateBuilder(args);
 
-try
-{
-    Log.Information("Iniciando Sistema de Gestión de Citas Médicas");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-    var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IPacienteService, PacienteService>();
+builder.Services.AddScoped<IDoctorService, DoctorService>();
+builder.Services.AddScoped<ICitaService, CitaService>();
+builder.Services.AddScoped<IReporteService, ReporteService>();
 
-    builder.Host.UseSerilog();
-
-    // Add services to the container.
-    builder.Services.AddControllers();
-    
-    builder.Services.AddFluentValidationAutoValidation();
-    builder.Services.AddValidatorsFromAssemblyContaining<PacienteValidator>();
-
-    builder.Services.AddMemoryCache();
-
-    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen(options =>
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
     {
-        options.SwaggerDoc("v1", new OpenApiInfo
-        {
-            Title = "Sistema de Gestión de Citas Médicas",
-            Version = "v1.0",
-            Description = "API REST para gestionar citas médicas aplicando principios de POO",
-            Contact = new OpenApiContact
-            {
-                Name = "Universidad IUV Maestría",
-                Email = "contacto@ejemplo.com"
-            }
-        });
-
-        var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
-        options.IncludeXmlComments(xmlPath);
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 
-    var app = builder.Build();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<PacienteValidator>();
+builder.Services.AddMemoryCache();
 
-    // Configure the HTTP request pipeline.
-    if (app.Environment.IsDevelopment())
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
     {
-        app.UseSwagger();
-        app.UseSwaggerUI(options =>
+        Title = "Sistema de Gestión de Citas Médicas",
+        Version = "v1.0",
+        Description = "API REST para gestionar citas médicas",
+        Contact = new OpenApiContact
         {
-            options.SwaggerEndpoint("/swagger/v1/swagger.json", "Sistema de Gestión de Citas Médicas v1.0");
-            options.DocumentTitle = "API Citas Médicas - Swagger UI";
-        });
-    }
+            Name = "Universidad IUV Maestría"
+        }
+    });
 
-    app.UseHttpsRedirection();
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
+    options.IncludeXmlComments(xmlPath);
+});
 
-    app.UseAuthorization();
+var app = builder.Build();
 
-    app.MapControllers();
-
-    Log.Information("Sistema iniciado correctamente en {Environment}", app.Environment.EnvironmentName);
-
-    app.Run();
-}
-catch (Exception ex)
+if (app.Environment.IsDevelopment())
 {
-    Log.Fatal(ex, "El sistema falló al iniciar");
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
-finally
-{
-    Log.CloseAndFlush();
-}
+
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
+
+app.Run();

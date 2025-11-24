@@ -1,233 +1,135 @@
 # Sistema de Gestión de Citas Médicas
 
 ## Descripción
-API REST desarrollada en .NET 8 con C# para gestionar citas médicas, aplicando los principios de Programación Orientada a Objetos (POO).
-
-Proyecto desarrollado para la tarea sobre Programación Orientada a Objetos (POO) - Universidad IUV Maestría
+API REST desarrollada en .NET 8 con C# para gestionar citas médicas, aplicando principios de POO e integrada con SQL Server.
 
 ---
 
 ## Requisitos Previos
 
-- **.NET 8 SDK** - [Descargar aquí](https://dotnet.microsoft.com/download/dotnet/8.0)
+- **.NET 8 SDK**
+- **SQL Server Express**
 - **Visual Studio 2022** o **VS Code**
-- Navegador web moderno
 
 ---
 
-## Instalación y Ejecución
+## Instalación y Configuración
 
-### Opción 1: Desde Visual Studio
-1. Abrir el archivo `WebApplication1.sln`
-2. Presionar **F5**
-3. Swagger se abrirá automáticamente
-
-### Opción 2: Desde línea de comandos
+### 1. Clonar el repositorio
 ```bash
 git clone https://github.com/EfrenReyesD/SistemaGestionCitasMedicas.git
-cd sistema-gestion-citas-medicas
+cd SistemaGestionCitasMedicas
+```
+
+### 2. Configurar Base de Datos
+
+Ejecutar el script SQL ubicado en la raíz del proyecto para crear la base de datos.
+
+**Configurar ConnectionString** en `appsettings.json`:
+```json
+"ConnectionStrings": {
+  "DefaultConnection": "Server=TU_SERVIDOR\\SQLEXPRESS;Database=SistemaGestionCitasMedicas;Trusted_Connection=true;TrustServerCertificate=true;MultipleActiveResultSets=true;Encrypt=false"
+}
+```
+
+### 3. Ejecutar
+```bash
 dotnet restore
 dotnet run
 ```
 
-Luego abrir: `https://localhost:7xxx/swagger`
+Swagger disponible en: `https://localhost:7056/swagger`
 
 ---
 
-## Arquitectura del Proyecto
+## Arquitectura
 
-### Estructura de Carpetas
 ```
-WebApplication1/
-|-- Controllers/
-|   |-- UsuariosController.cs
-|   |-- PacientesController.cs
-|   |-- DoctoresController.cs
-|   |-- CitasController.cs
-|   `-- ReportesController.cs
-|
-|-- Models/
-|   |-- Usuario.cs (clase base)
-|   |-- UsuarioManager.cs
-|   |-- Paciente.cs
-|   |-- Doctor.cs
-|   |-- Asistente.cs
-|   |-- Cita.cs
-|   |-- NotaMedica.cs
-|   |-- RecordatorioService.cs
-|   |-- Reporte.cs
-|   `-- DatosMock.cs (GUIDs fijos para pruebas)
-|
-|-- docs/
-|   `-- DiagramaClases_SistemaGestionCitasMedicas.png
-|
-|-- Program.cs
-|-- appsettings.json
-|-- WebApplication1.csproj
-|-- README.md
-`-- GUIDS_SWAGGER.md
+Controllers → Services → ApplicationDbContext → SQL Server (con Stored Procedures)
 ```
 
-### Diagrama de Clases
+**Capas:**
+- **Controllers:** Endpoints API REST
+- **Services:** Lógica de negocio con interfaces
+- **Data:** Entity Framework Core 8
+- **Database:** SQL Server con SP y Triggers
 
-<img width="880" height="758" alt="DiagramaClases_SistemaGestionCitasMedicas" src="https://github.com/user-attachments/assets/c97b2ef9-cb5f-4bcc-b1be-567158d94bd2" />
-
-
----
-
-## Principios de POO Aplicados
-
-### 1. Herencia
-- `Paciente`, `Doctor` y `Asistente` heredan de la clase base `Usuario`
-- Comparten propiedades comunes: IdUsuario, Nombre, Email, PasswordHash, Rol
-
-### 2. Encapsulamiento
-- Propiedades con getters y setters
-- Métodos privados como `HashPassword()` en Usuario
-- Lista privada `_historial` en Paciente
-
-### 3. Polimorfismo
-- Métodos heredados pueden ser usados por cualquier tipo de Usuario
-
-### 4. Composición
-- `Cita` contiene instancias de `Paciente` y `Doctor`
-- `Cita` puede tener una `NotaMedica`
-
-### 5. Asociación
-- `Doctor` se relaciona con múltiples `Cita` a través de la agenda
-- `Paciente` tiene historial de `NotaMedica`
-
----
-
-## Inicio Rápido
-
-### 1. Ver datos precargados
-- `GET /api/pacientes` - 2 pacientes
-- `GET /api/doctores` - 2 doctores  
-- `GET /api/citas` - 3 citas programadas
-
-### 2. Probar con GUIDs fijos
-Ver archivo **`GUIDS_SWAGGER.md`** para copiar/pegar IDs de prueba.
-
-**Ejemplo:**
-- Paciente María: `11111111-1111-1111-1111-111111111111`
-- Doctor Juan Pérez: `33333333-3333-3333-3333-333333333333`
-
----
-
-## Endpoints Disponibles
-
-Todos los endpoints incluyen documentación detallada visible en **Swagger UI**.
-
-### Usuarios (`/api/usuarios`)
-- **GET** `/api/usuarios` - Obtiene todos los usuarios del sistema
-- **GET** `/api/usuarios/{id}` - Obtiene un usuario por ID
-- **POST** `/api/usuarios` - Crea un nuevo usuario
-- **PUT** `/api/usuarios/{id}/rol` - Asigna un rol a un usuario
-
-### Pacientes (`/api/pacientes`)
-- **GET** `/api/pacientes` - Obtiene todos los pacientes
-- **GET** `/api/pacientes/{id}` - Obtiene un paciente por ID
-- **POST** `/api/pacientes` - Registra un nuevo paciente
-- **GET** `/api/pacientes/{id}/historial` - Obtiene el historial médico del paciente
-
-### Doctores (`/api/doctores`)
-- **GET** `/api/doctores` - Obtiene todos los doctores
-- **GET** `/api/doctores/{id}` - Obtiene un doctor por ID
-- **POST** `/api/doctores` - Registra un nuevo doctor
-- **GET** `/api/doctores/{id}/agenda?fecha={fecha}` - Obtiene la agenda del doctor para una fecha
-
-### Citas (`/api/citas`)
-- **GET** `/api/citas` - Obtiene todas las citas
-- **GET** `/api/citas/{id}` - Obtiene una cita por ID
-- **POST** `/api/citas` - Programa una nueva cita
-- **PUT** `/api/citas/{id}/reprogramar` - Reprograma una cita existente
-- **PUT** `/api/citas/{id}/cancelar` - Cancela una cita
-- **POST** `/api/citas/{id}/nota` - Agrega una nota médica a la cita
-
-### Reportes (`/api/reportes`)
-- **GET** `/api/reportes/consultas?fechaInicio={fecha}&fechaFin={fecha}` - Genera reporte de consultas
-- **GET** `/api/reportes/cancelaciones?fechaInicio={fecha}&fechaFin={fecha}` - Genera reporte de cancelaciones
-
----
-
-## Ejemplos de Uso
-
-### Crear un Paciente
-```json
-POST /api/pacientes
-{
-  "nombre": "Pedro Sánchez",
-  "email": "pedro.sanchez@email.com",
-  "fechaNacimiento": "1985-03-20",
-  "telefono": "+34 600 987 654"
-}
+**Estructura:**
 ```
-
-### Programar una Cita
-```json
-POST /api/citas
-{
-  "fechaHora": "2025-02-01T10:00:00",
-  "duracionMin": 30,
-  "tipo": "Consulta General",
-  "paciente": {
-    "idPaciente": "11111111-1111-1111-1111-111111111111"
-  },
-  "doctor": {
-    "idUsuario": "33333333-3333-3333-3333-333333333333"
-  }
-}
-```
-
-### Reprogramar una Cita
-```json
-PUT /api/citas/55555555-5555-5555-5555-555555555555/reprogramar
-"2025-02-05T14:00:00"
+SistemaGestionCitasMedicas/
+├── Controllers/
+├── Services/
+├── Data/
+├── Models/
+├── Validators/
+└── Program.cs
 ```
 
 ---
 
-## Guía de Uso en Swagger
+## Principios de POO
 
-1. **GET sin parámetros**: Clic en endpoint - "Try it out" - "Execute"
-2. **GET con ID**: "Try it out" - Pegar GUID - "Execute"
-3. **POST/PUT**: "Try it out" - Pegar JSON - "Execute"
-
----
-
-## Tecnologías Utilizadas
-
-- **.NET 8** - Framework principal
-- **ASP.NET Core Web API** - Arquitectura REST
-- **Swagger/OpenAPI** - Documentación interactiva
-- **C# 12** - Lenguaje de programación
-- **GUID** - Identificadores únicos
+- **Encapsulamiento:** Servicios con interfaces
+- **Polimorfismo:** `IUsuarioService`, `IPacienteService`, `IDoctorService`, `ICitaService`
+- **Inyección de Dependencias:** Todos los servicios registrados en DI
+- **Composición:** `Cita` contiene `Paciente` y `Doctor`
 
 ---
 
-## Notas Importantes
+## Stack Tecnológico
 
-- **Almacenamiento**: Datos en memoria (se pierden al reiniciar)
-- **Datos de prueba**: Precargados automáticamente
-- **GUIDs fijos**: Ver `GUIDS_SWAGGER.md`
+- **.NET 8** + **ASP.NET Core Web API**
+- **Entity Framework Core 8**
+- **SQL Server Express**
+- **FluentValidation**
+- **Swagger/OpenAPI**
 
----
-
-## Solución de Problemas
-
-**Error: SDK no encontrado**  
-- Instalar .NET 8 SDK desde https://dotnet.microsoft.com/download
-
-**Swagger no abre automáticamente**  
-- Abrir manualmente: `https://localhost:7xxx/swagger`
+**Características:**
+- Stored Procedures (5 implementados)
+- Triggers de validación
+- Caché en memoria
+- Manejo de excepciones
 
 ---
 
-## Información del Proyecto
+## Endpoints API
 
-- **Nombre**: SistemaGestionCitasMedicas
-- **Versión**: 1.0.0
-- **Autor**: Universidad IUV Maestría
-- **Framework**: .NET 8.0
-- **Materia**: Programación Orientada a Objetos
+Ver documentación completa en **Swagger**: `https://localhost:7056/swagger`
+
+**Usuarios:** `GET/POST /api/usuarios`  
+**Pacientes:** `GET/POST /api/pacientes`, `GET /api/pacientes/{id}/historial`  
+**Doctores:** `GET/POST /api/doctores`, `GET /api/doctores/{id}/agenda`  
+**Citas:** `GET/POST /api/citas`, `PUT /api/citas/{id}/reprogramar|cancelar`  
+**Reportes:** `GET /api/reportes/consultas|cancelaciones`
+
+---
+
+## Datos de Prueba
+
+Datos precargados en la base de datos:
+
+- **Paciente:** `11111111-1111-1111-1111-111111111111` (María González)
+- **Doctor:** `33333333-3333-3333-3333-333333333333` (Dr. Juan Pérez)
+- **Cita:** `55555555-5555-5555-5555-555555555555`
+
+Ver más en **`GUIDS_SWAGGER.md`**
+
+---
+
+## Comandos
+
+```bash
+dotnet restore
+dotnet build
+dotnet run
+dotnet publish -c Release -o ./publish
+```
+
+---
+
+## Información
+
+- **Versión:** 1.0.0
+- **Autor:** Universidad IUV Maestría
+- **Framework:** .NET 8.0
+- **Repositorio:** https://github.com/EfrenReyesD/SistemaGestionCitasMedicas

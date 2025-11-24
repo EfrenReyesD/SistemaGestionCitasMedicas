@@ -1,0 +1,195 @@
+@SistemaGestionCitasMedicas_HostAddress = https://localhost:7056
+@SistemaGestionCitasMedicas_Http = http://localhost:5157
+
+### ============================================================
+### SISTEMA DE GESTIÓN DE CITAS MÉDICAS - API REST
+### Universidad IUV Maestría - Desarrollo de Software
+### ============================================================
+
+### ============= PACIENTES =============
+
+### Obtener todos los pacientes
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/pacientes
+Accept: application/json
+
+###
+
+### Obtener paciente por ID (Reemplazar {id} con un GUID válido)
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/pacientes/{id}
+Accept: application/json
+
+###
+
+### Registrar nuevo paciente
+POST {{SistemaGestionCitasMedicas_HostAddress}}/api/pacientes
+Content-Type: application/json
+
+{
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "fechaNacimiento": "1990-05-15T00:00:00",
+  "direccion": "Calle Principal 123",
+  "telefono": "555-1234",
+  "email": "juan.perez@example.com",
+  "numeroSeguroSocial": "123456789"
+}
+
+###
+
+### Obtener historial médico de un paciente
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/pacientes/{id}/historial
+Accept: application/json
+
+###
+
+### ============= DOCTORES =============
+
+### Obtener todos los doctores
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/doctores
+Accept: application/json
+
+###
+
+### Obtener doctor por ID
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/doctores/{id}
+Accept: application/json
+
+###
+
+### Registrar nuevo doctor
+POST {{SistemaGestionCitasMedicas_HostAddress}}/api/doctores
+Content-Type: application/json
+
+{
+  "nombre": "Dra. María",
+  "apellido": "García",
+  "email": "maria.garcia@hospital.com",
+  "especialidad": "Cardiología",
+  "numeroLicencia": "MED-54321",
+  "telefono": "555-5678"
+}
+
+###
+
+### Obtener citas de un doctor
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/doctores/{id}/citas
+Accept: application/json
+
+###
+
+### Obtener disponibilidad de un doctor (fecha en formato: 2024-12-01)
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/doctores/{id}/disponibilidad?fecha=2024-12-01
+Accept: application/json
+
+###
+
+### ============= CITAS =============
+
+### Obtener todas las citas (con caché de 5 minutos)
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/citas
+Accept: application/json
+
+###
+
+### Obtener cita por ID
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/citas/{id}
+Accept: application/json
+
+###
+
+### Programar nueva cita
+POST {{SistemaGestionCitasMedicas_HostAddress}}/api/citas
+Content-Type: application/json
+
+{
+  "fechaHora": "2024-12-10T10:00:00",
+  "motivo": "Consulta general",
+  "estado": "Programada",
+  "paciente": {
+    "idPaciente": "guid-del-paciente",
+    "nombre": "Juan",
+    "apellido": "Pérez"
+  },
+  "doctor": {
+    "idUsuario": "guid-del-doctor",
+    "nombre": "Dra. María",
+    "apellido": "García",
+    "especialidad": "Cardiología"
+  }
+}
+
+###
+
+### Reprogramar una cita existente
+PUT {{SistemaGestionCitasMedicas_HostAddress}}/api/citas/{id}/reprogramar
+Content-Type: application/json
+
+"2024-12-15T14:00:00"
+
+###
+
+### Cancelar una cita
+PUT {{SistemaGestionCitasMedicas_HostAddress}}/api/citas/{id}/cancelar
+Accept: application/json
+
+###
+
+### Agregar nota médica a una cita
+POST {{SistemaGestionCitasMedicas_HostAddress}}/api/citas/{id}/nota?idDoctorAutor={guid-del-doctor}
+Content-Type: application/json
+
+{
+  "observaciones": "Paciente presenta síntomas de...",
+  "diagnostico": "Diagnóstico preliminar",
+  "tratamiento": "Medicamento X, 3 veces al día",
+  "proximaRevision": "2024-12-20T10:00:00"
+}
+
+###
+
+### ============= USUARIOS =============
+
+### Obtener todos los usuarios
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/usuarios
+Accept: application/json
+
+###
+
+### Obtener usuario por ID
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/usuarios/{id}
+Accept: application/json
+
+###
+
+### Buscar usuarios por rol (Doctor, Asistente)
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/usuarios/rol/Doctor
+Accept: application/json
+
+###
+
+### ============= REPORTES =============
+
+### Obtener reporte de citas por doctor
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/reportes/citas-por-doctor
+Accept: application/json
+
+###
+
+### Obtener reporte de citas por estado
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/reportes/citas-por-estado
+Accept: application/json
+
+###
+
+### Obtener reporte de citas por fecha
+GET {{SistemaGestionCitasMedicas_HostAddress}}/api/reportes/citas-por-fecha?fechaInicio=2024-12-01&fechaFin=2024-12-31
+Accept: application/json
+
+###
+
+### ============= SWAGGER UI =============
+
+### Abrir documentación Swagger (Copiar URL en navegador)
+# {{SistemaGestionCitasMedicas_HostAddress}}/swagger
+
+###

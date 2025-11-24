@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SistemaGestionCitasMedicas.Models;
+using SistemaGestionCitasMedicas.Services;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace SistemaGestionCitasMedicas.Controllers
@@ -9,179 +10,181 @@ namespace SistemaGestionCitasMedicas.Controllers
     [Produces("application/json")]
     public class CitasController : ControllerBase
     {
-        private readonly ILogger<CitasController> _logger;
+        private readonly ICitaService _citaService;
         private readonly IMemoryCache _cache;
+        private readonly ILogger<CitasController> _logger;
+        private const string CacheKey = "todas_las_citas";
 
-        public CitasController(ILogger<CitasController> logger, IMemoryCache cache)
+        public CitasController(ICitaService citaService, IMemoryCache cache, ILogger<CitasController> logger)
         {
-            _logger = logger;
+            _citaService = citaService;
             _cache = cache;
-        }
-
-        static CitasController()
-        {
-            var pacientes = PacientesController.ObtenerPacientes();
-            var doctores = DoctoresController.ObtenerDoctores();
-
-            if (pacientes.Count >= 2 && doctores.Count >= 2)
-            {
-                CitaManager.AgregarCita(new Cita
-                {
-                    IdCita = DatosMock.IdCita1,
-                    FechaHora = DateTime.Now.AddDays(5),
-                    DuracionMin = 30,
-                    Estado = "Programada",
-                    Tipo = "Consulta General",
-                    Paciente = pacientes[0],
-                    Doctor = doctores[0]
-                });
-
-                CitaManager.AgregarCita(new Cita
-                {
-                    IdCita = DatosMock.IdCita2,
-                    FechaHora = DateTime.Now.AddDays(7),
-                    DuracionMin = 45,
-                    Estado = "Programada",
-                    Tipo = "Control Pediátrico",
-                    Paciente = pacientes[1],
-                    Doctor = doctores[1]
-                });
-
-                CitaManager.AgregarCita(new Cita
-                {
-                    IdCita = DatosMock.IdCita3,
-                    FechaHora = DateTime.Now.AddDays(10),
-                    DuracionMin = 30,
-                    Estado = "Programada",
-                    Tipo = "Revisión Cardiológica",
-                    Paciente = pacientes[0],
-                    Doctor = doctores[0]
-                });
-            }
+            _logger = logger;
         }
 
         /// <summary>
         /// Obtiene todas las citas programadas
         /// </summary>
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<Cita>> GetCitas()
+        public async Task<ActionResult<IEnumerable<Cita>>> GetCitas()
         {
-            const string cacheKey = "todas_las_citas";
-            
-            if (!_cache.TryGetValue(cacheKey, out List<Cita>? citas))
+            try
             {
-                citas = CitaManager.ObtenerTodas();
-                _cache.Set(cacheKey, citas, TimeSpan.FromMinutes(5));
-                _logger.LogInformation("Lista de citas cargada en caché");
+                if (!_cache.TryGetValue(CacheKey, out List<Cita>? citas))
+                {
+                    citas = await _citaService.ObtenerTodasAsync();
+                    _cache.Set(CacheKey, citas, TimeSpan.FromMinutes(5));
+                }
+                return Ok(citas);
             }
-            else
+            catch (Exception ex)
             {
-                _logger.LogInformation("Lista de citas obtenida desde caché");
+                _logger.LogError(ex, "Error al obtener citas");
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
             }
-
-            return Ok(citas);
         }
 
         /// <summary>
         /// Obtiene una cita específica por su ID
         /// </summary>
         [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<Cita> GetCita(Guid id)
+        public async Task<ActionResult<Cita>> GetCita(Guid id)
         {
-            var cita = CitaManager.ObtenerPorId(id);
-            if (cita == null)
+            try
             {
-                _logger.LogWarning("Cita con ID {CitaId} no encontrada", id);
-                return NotFound();
-            }
+                var cita = await _citaService.ObtenerCitaAsync(id);
+                if (cita == null)
+                    return NotFound(new { mensaje = $"Cita con ID {id} no encontrada" });
 
-            return Ok(cita);
+                return Ok(cita);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener cita {CitaId}", id);
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
+            }
         }
 
         /// <summary>
         /// Programa una nueva cita médica
         /// </summary>
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        public ActionResult<Cita> PostCita(Cita cita)
+        public async Task<ActionResult<Cita>> PostCita(Cita cita)
         {
-            CitaManager.AgregarCita(cita);
-            _cache.Remove("todas_las_citas");
-            _logger.LogInformation("Cita creada: {CitaId} para paciente {PacienteId} con doctor {DoctorId}", 
-                cita.IdCita, cita.Paciente?.IdPaciente, cita.Doctor?.IdUsuario);
-            return CreatedAtAction(nameof(GetCita), new { id = cita.IdCita }, cita);
+            try
+            {
+                if (cita?.Paciente == null || cita.Doctor == null)
+                    return BadRequest(new { mensaje = "La cita debe tener un paciente y un doctor asignados" });
+
+                var citaCreada = await _citaService.ProgramarCitaAsync(cita, cita.Paciente.IdPaciente, cita.Doctor.IdUsuario);
+                _cache.Remove(CacheKey);
+                
+                return CreatedAtAction(nameof(GetCita), new { id = citaCreada.IdCita }, citaCreada);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al programar cita");
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
+            }
         }
 
         /// <summary>
         /// Reprograma una cita existente
         /// </summary>
         [HttpPut("{id}/reprogramar")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult Reprogramar(Guid id, [FromBody] DateTime nuevaFecha)
+        public async Task<ActionResult> Reprogramar(Guid id, [FromBody] DateTime nuevaFecha)
         {
-            var cita = CitaManager.ObtenerPorId(id);
-            if (cita == null)
-                return NotFound();
-
-            if (cita.Reprogramar(nuevaFecha))
+            try
             {
-                _cache.Remove("todas_las_citas");
-                _logger.LogInformation("Cita {CitaId} reprogramada de {FechaAnterior} a {FechaNueva}", 
-                    id, cita.FechaHora, nuevaFecha);
-                return Ok(new { mensaje = "Cita reprogramada exitosamente", nuevaFecha });
+                var resultado = await _citaService.ReprogramarCitaAsync(id, nuevaFecha);
+                if (resultado)
+                {
+                    _cache.Remove(CacheKey);
+                    return Ok(new { mensaje = "Cita reprogramada exitosamente", nuevaFecha });
+                }
+                return BadRequest(new { mensaje = "No se puede reprogramar esta cita" });
             }
-
-            _logger.LogWarning("No se pudo reprogramar la cita {CitaId}", id);
-            return BadRequest(new { mensaje = "No se puede reprogramar esta cita" });
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al reprogramar cita {CitaId}", id);
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
+            }
         }
 
         /// <summary>
-        /// Cancela una cita existente
+        /// Cancela una cita programada
         /// </summary>
         [HttpPut("{id}/cancelar")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult Cancelar(Guid id)
+        public async Task<ActionResult> Cancelar(Guid id)
         {
-            var cita = CitaManager.ObtenerPorId(id);
-            if (cita == null)
-                return NotFound();
-
-            if (cita.Cancelar())
+            try
             {
-                _cache.Remove("todas_las_citas");
-                _logger.LogWarning("Cita {CitaId} cancelada", id);
-                return Ok(new { mensaje = "Cita cancelada exitosamente" });
+                var resultado = await _citaService.CancelarCitaAsync(id);
+                if (resultado)
+                {
+                    _cache.Remove(CacheKey);
+                    return Ok(new { mensaje = "Cita cancelada exitosamente" });
+                }
+                return BadRequest(new { mensaje = "No se puede cancelar esta cita" });
             }
-
-            return BadRequest(new { mensaje = "Esta cita ya está cancelada" });
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cancelar cita {CitaId}", id);
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
+            }
         }
 
         /// <summary>
         /// Agrega una nota médica a una cita
         /// </summary>
         [HttpPost("{id}/nota")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult AgregarNota(Guid id, [FromBody] NotaMedica nota)
+        public async Task<ActionResult<NotaMedica>> PostNota(Guid id, [FromBody] NotaMedica nota, [FromQuery] Guid idDoctorAutor)
         {
-            var cita = CitaManager.ObtenerPorId(id);
-            if (cita == null)
-                return NotFound();
+            try
+            {
+                if (nota == null || idDoctorAutor == Guid.Empty)
+                    return BadRequest(new { mensaje = "Los datos de la nota y el ID del doctor son requeridos" });
 
-            nota.IdNota = Guid.NewGuid();
-            nota.Fecha = DateTime.Now;
-            cita.AgregarNota(nota);
-
-            _logger.LogInformation("Nota médica agregada a cita {CitaId}", id);
-
-            return Created(string.Empty, nota);
+                var notaCreada = await _citaService.AgregarNotaAsync(id, nota, idDoctorAutor);
+                return CreatedAtAction(nameof(GetCita), new { id }, notaCreada);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al agregar nota a cita {CitaId}", id);
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
+            }
         }
     }
 }

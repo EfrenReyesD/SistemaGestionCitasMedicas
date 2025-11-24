@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SistemaGestionCitasMedicas.Models;
+using SistemaGestionCitasMedicas.Services;
 
 namespace SistemaGestionCitasMedicas.Controllers
 {
@@ -8,86 +9,99 @@ namespace SistemaGestionCitasMedicas.Controllers
     [Produces("application/json")]
     public class PacientesController : ControllerBase
     {
-        private static List<Paciente> _pacientes = new List<Paciente>
-        {
-            new Paciente
-            {
-                IdPaciente = DatosMock.IdPaciente1,
-                IdUsuario = DatosMock.IdPaciente1,
-                Nombre = "María González",
-                Email = "maria.gonzalez@email.com",
-                PasswordHash = "cGFjMTIz",
-                FechaNacimiento = new DateTime(1990, 5, 15),
-                Telefono = "+34 600 123 456",
-                Rol = "Paciente"
-            },
-            new Paciente
-            {
-                IdPaciente = DatosMock.IdPaciente2,
-                IdUsuario = DatosMock.IdPaciente2,
-                Nombre = "Carlos Rodríguez",
-                Email = "carlos.rodriguez@email.com",
-                PasswordHash = "cGFjMTIz",
-                FechaNacimiento = new DateTime(1979, 8, 22),
-                Telefono = "+34 600 234 567",
-                Rol = "Paciente"
-            }
-        };
+        private readonly IPacienteService _pacienteService;
+        private readonly ILogger<PacientesController> _logger;
 
-        public static List<Paciente> ObtenerPacientes() => _pacientes;
+        public PacientesController(IPacienteService pacienteService, ILogger<PacientesController> logger)
+        {
+            _pacienteService = pacienteService;
+            _logger = logger;
+        }
 
         /// <summary>
         /// Obtiene todos los pacientes registrados
         /// </summary>
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<Paciente>> GetPacientes()
+        public async Task<ActionResult<IEnumerable<Paciente>>> GetPacientes()
         {
-            return Ok(_pacientes);
+            try
+            {
+                var pacientes = await _pacienteService.ObtenerTodosAsync();
+                return Ok(pacientes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener pacientes");
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
+            }
         }
 
         /// <summary>
         /// Obtiene un paciente específico por su ID
         /// </summary>
         [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<Paciente> GetPaciente(Guid id)
+        public async Task<ActionResult<Paciente>> GetPaciente(Guid id)
         {
-            var paciente = _pacientes.FirstOrDefault(p => p.IdPaciente == id);
-            if (paciente == null)
-                return NotFound();
+            try
+            {
+                var paciente = await _pacienteService.ObtenerPacienteAsync(id);
+                if (paciente == null)
+                    return NotFound(new { mensaje = $"Paciente con ID {id} no encontrado" });
 
-            return Ok(paciente);
+                return Ok(paciente);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener paciente {PacienteId}", id);
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
+            }
         }
 
         /// <summary>
         /// Registra un nuevo paciente en el sistema
         /// </summary>
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        public ActionResult<Paciente> PostPaciente(Paciente paciente)
+        public async Task<ActionResult<Paciente>> PostPaciente(Paciente paciente)
         {
-            paciente.IdPaciente = Guid.NewGuid();
-            paciente.IdUsuario = Guid.NewGuid();
-            paciente.Rol = "Paciente";
-            _pacientes.Add(paciente);
-            return CreatedAtAction(nameof(GetPaciente), new { id = paciente.IdPaciente }, paciente);
+            try
+            {
+                if (paciente == null)
+                    return BadRequest(new { mensaje = "Los datos del paciente son requeridos" });
+
+                var pacienteCreado = await _pacienteService.RegistrarPacienteAsync(paciente);
+                return CreatedAtAction(nameof(GetPaciente), new { id = pacienteCreado.IdPaciente }, pacienteCreado);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al registrar paciente");
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
+            }
         }
 
         /// <summary>
         /// Obtiene el historial médico de un paciente
         /// </summary>
         [HttpGet("{id}/historial")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<List<NotaMedica>> GetHistorial(Guid id)
+        public async Task<ActionResult<List<NotaMedica>>> GetHistorial(Guid id)
         {
-            var paciente = _pacientes.FirstOrDefault(p => p.IdPaciente == id);
-            if (paciente == null)
-                return NotFound();
-
-            return Ok(paciente.ObtenerHistorial());
+            try
+            {
+                var historial = await _pacienteService.ObtenerHistorialAsync(id);
+                return Ok(historial);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener historial del paciente {PacienteId}", id);
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
+            }
         }
     }
 }

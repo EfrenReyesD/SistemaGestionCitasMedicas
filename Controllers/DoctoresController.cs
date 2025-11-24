@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SistemaGestionCitasMedicas.Models;
+using SistemaGestionCitasMedicas.Services;
 
 namespace SistemaGestionCitasMedicas.Controllers
 {
@@ -8,83 +9,99 @@ namespace SistemaGestionCitasMedicas.Controllers
     [Produces("application/json")]
     public class DoctoresController : ControllerBase
     {
-        private static List<Doctor> _doctores = new List<Doctor>
-        {
-            new Doctor
-            {
-                IdUsuario = DatosMock.IdDoctor1,
-                Nombre = "Dr. Juan Pérez",
-                Email = "juan.perez@hospital.com",
-                PasswordHash = "ZG9jMTIz",
-                NumeroCedula = "MED-12345",
-                Especialidad = "Cardiología",
-                Rol = "Doctor"
-            },
-            new Doctor
-            {
-                IdUsuario = DatosMock.IdDoctor2,
-                Nombre = "Dra. Laura Sánchez",
-                Email = "laura.sanchez@hospital.com",
-                PasswordHash = "ZG9jMTIz",
-                NumeroCedula = "MED-67890",
-                Especialidad = "Pediatría",
-                Rol = "Doctor"
-            }
-        };
+        private readonly IDoctorService _doctorService;
+        private readonly ILogger<DoctoresController> _logger;
 
-        public static List<Doctor> ObtenerDoctores() => _doctores;
+        public DoctoresController(IDoctorService doctorService, ILogger<DoctoresController> logger)
+        {
+            _doctorService = doctorService;
+            _logger = logger;
+        }
 
         /// <summary>
         /// Obtiene todos los doctores registrados
         /// </summary>
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<Doctor>> GetDoctores()
+        public async Task<ActionResult<IEnumerable<Doctor>>> GetDoctores()
         {
-            return Ok(_doctores);
+            try
+            {
+                var doctores = await _doctorService.ObtenerTodosAsync();
+                return Ok(doctores);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener doctores");
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
+            }
         }
 
         /// <summary>
         /// Obtiene un doctor específico por su ID
         /// </summary>
         [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<Doctor> GetDoctor(Guid id)
+        public async Task<ActionResult<Doctor>> GetDoctor(Guid id)
         {
-            var doctor = _doctores.FirstOrDefault(d => d.IdUsuario == id);
-            if (doctor == null)
-                return NotFound();
+            try
+            {
+                var doctor = await _doctorService.ObtenerDoctorAsync(id);
+                if (doctor == null)
+                    return NotFound(new { mensaje = $"Doctor con ID {id} no encontrado" });
 
-            return Ok(doctor);
+                return Ok(doctor);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener doctor {DoctorId}", id);
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
+            }
         }
 
         /// <summary>
         /// Registra un nuevo doctor en el sistema
         /// </summary>
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        public ActionResult<Doctor> PostDoctor(Doctor doctor)
+        public async Task<ActionResult<Doctor>> PostDoctor(Doctor doctor)
         {
-            doctor.IdUsuario = Guid.NewGuid();
-            doctor.Rol = "Doctor";
-            _doctores.Add(doctor);
-            return CreatedAtAction(nameof(GetDoctor), new { id = doctor.IdUsuario }, doctor);
+            try
+            {
+                if (doctor == null)
+                    return BadRequest(new { mensaje = "Los datos del doctor son requeridos" });
+
+                var doctorCreado = await _doctorService.RegistrarDoctorAsync(doctor);
+                return CreatedAtAction(nameof(GetDoctor), new { id = doctorCreado.IdDoctor }, doctorCreado);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al registrar doctor");
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
+            }
         }
 
         /// <summary>
         /// Obtiene la agenda de citas de un doctor para una fecha específica
         /// </summary>
         [HttpGet("{id}/agenda")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<List<Cita>> GetAgenda(Guid id, [FromQuery] DateTime fecha)
+        public async Task<ActionResult<List<Cita>>> GetAgenda(Guid id, [FromQuery] DateTime fecha)
         {
-            var doctor = _doctores.FirstOrDefault(d => d.IdUsuario == id);
-            if (doctor == null)
-                return NotFound();
-
-            return Ok(doctor.VerAgenda(fecha));
+            try
+            {
+                var agenda = await _doctorService.ObtenerAgendaAsync(id, fecha);
+                return Ok(agenda);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { mensaje = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener agenda del doctor {DoctorId}", id);
+                return StatusCode(500, new { mensaje = "Error interno del servidor" });
+            }
         }
     }
 }
